@@ -94,47 +94,22 @@ def main():
   global quit_server
   quit_server = False
 
-  # Normally, Gruyere only accepts connections to/from localhost. If you
-  # would like to allow access from other ip addresses, you can change to
-  # operate in a less secure mode. Set insecure_mode to True to serve on the
-  # hostname instead of localhost and add the addresses of the other machines
-  # to allowed_ips below.
-
-  insecure_mode = False
-
-  # WARNING! DO NOT CHANGE THE FOLLOWING SECTION OF CODE!
-
-  # This application is very exploitable. It takes several precautions to
-  # limit the risk from a real attacker:
-  #   (1) Serve requests on localhost so that it will not be accessible
-  # from other machines.
-  #   (2) If a request is received from any IP other than localhost, quit.
-  # (This protection is implemented in do_GET/do_POST.)
-  #   (3) Inject a random identifier as the first part of the path and
-  # quit if a request is received without this identifier (except for an
-  # empty path which redirects and /favicon.ico).
-  #   (4) Automatically exit after 2 hours (7200 seconds) to mitigate against
-  # accidentally leaving the server running.
-
-  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))   # DO NOT CHANGE
-  quit_timer.start()                                             # DO NOT CHANGE
-
-  if insecure_mode:                                              # DO NOT CHANGE
-    server_name = os.popen('hostname').read().replace('\n', '')  # DO NOT CHANGE
-  else:                                                          # DO NOT CHANGE
-    server_name = '127.0.0.1'                                    # DO NOT CHANGE
-  server_port = 8008                                             # DO NOT CHANGE
+  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))   
+  quit_timer.start()
+  
+  server_name = 'localhost'  
+  server_port = 8008                                             
 
   # The unique id is created from a CSPRNG.
-  try:                                                           # DO NOT CHANGE
-    r = random.SystemRandom()                                    # DO NOT CHANGE
-  except NotImplementedError:                                    # DO NOT CHANGE
-    _Exit('Could not obtain a CSPRNG source')                    # DO NOT CHANGE
+  try:                                                           
+    r = random.SystemRandom()                                    
+  except NotImplementedError:                                    
+    _Exit('Could not obtain a CSPRNG source')                    
 
-  global server_unique_id                                        # DO NOT CHANGE
-  server_unique_id = str(r.randint(2**128, 2**(128+1)))          # DO NOT CHANGE
+  global server_unique_id                                        
+  server_unique_id = str(r.randint(2**128, 2**(128+1)))          
 
-  # END WARNING!
+ 
 
   global http_server
   http_server = HTTPServer((server_name, server_port),
@@ -769,47 +744,29 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     path = url[2]
     query = url[4]
 
-    # Normally, Gruyere only accepts connections to/from localhost. If you
-    # would like to allow access from other ip addresses, add the addresses
-    # of the other machines to allowed_ips and change insecure_mode to True
-    # above. This makes the application more vulnerable to a real attack so
-    # you should only add ips of machines you completely control and make
-    # sure that you are not using them to access any other web pages while
-    # you are using Gruyere.
+   #Network Security settings
 
     allowed_ips = ['127.0.0.1']
 
-    # WARNING! DO NOT CHANGE THE FOLLOWING SECTION OF CODE!
+    request_ip = self.client_address[0]                      
+    if request_ip not in allowed_ips:                        
+      print >>sys.stderr, (                                  
+          'DANGER! Request from bad ip: ' + request_ip)      
+      _Exit('bad_ip')                                        
 
-    # This application is very exploitable. See main for details. What we're
-    # doing here is (2) and (3) on the previous list:
-    #   (2) If a request is received from any IP other than localhost, quit.
-    # An external attacker could still mount an attack on this IP by putting
-    # an attack on an external web page, e.g., a web page that redirects to
-    # a vulnerable url on 127.0.0.1 (which is why we use a random number).
-    #   (3) Inject a random identifier as the first part of the path and
-    # quit if a request is received without this identifier (except for an
-    # empty path which redirects and /favicon.ico).
+    if (server_unique_id not in path                         
+        and path != '/favicon.ico'):                         
+      if path == '' or path == '/':                          
+        self._SendRedirect('/', server_unique_id)            
+        return                                               
+      else:                                                  
+        print >>sys.stderr, (                                
+            'DANGER! Request without unique id: ' + path)    
+        _Exit('bad_id')                                      
 
-    request_ip = self.client_address[0]                      # DO NOT CHANGE
-    if request_ip not in allowed_ips:                        # DO NOT CHANGE
-      print >>sys.stderr, (                                  # DO NOT CHANGE
-          'DANGER! Request from bad ip: ' + request_ip)      # DO NOT CHANGE
-      _Exit('bad_ip')                                        # DO NOT CHANGE
+    path = path.replace('/' + server_unique_id, '', 1)       
 
-    if (server_unique_id not in path                         # DO NOT CHANGE
-        and path != '/favicon.ico'):                         # DO NOT CHANGE
-      if path == '' or path == '/':                          # DO NOT CHANGE
-        self._SendRedirect('/', server_unique_id)            # DO NOT CHANGE
-        return                                               # DO NOT CHANGE
-      else:                                                  # DO NOT CHANGE
-        print >>sys.stderr, (                                # DO NOT CHANGE
-            'DANGER! Request without unique id: ' + path)    # DO NOT CHANGE
-        _Exit('bad_id')                                      # DO NOT CHANGE
-
-    path = path.replace('/' + server_unique_id, '', 1)       # DO NOT CHANGE
-
-    # END WARNING!
+  
 
     self.HandleRequest(path, query, server_unique_id)
 
