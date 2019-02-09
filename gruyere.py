@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 """Gruyere - a web application with holes.
 
@@ -18,20 +18,24 @@ code may be used for educational or instructional purposes provided this
 notice is kept intact. By using Gruyere you agree to the Terms of Service
 https://www.google.com/intl/en/policies/terms/
 """
+from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 __author__ = 'Bruce Leban'
 
 # system modules
-from BaseHTTPServer import BaseHTTPRequestHandler
-from BaseHTTPServer import HTTPServer
+from http.server import BaseHTTPRequestHandler
+from http.server import HTTPServer
 import cgi
-import cPickle
+import pickle
 import os
 import random
 import sys
 import threading
-import urllib
-from urlparse import urlparse
+import urllib.request, urllib.parse, urllib.error
+from urllib.parse import urlparse
 
 try:
   sys.dont_write_bytecode = True
@@ -115,12 +119,12 @@ def main():
   http_server = HTTPServer((server_name, server_port),
                            GruyereRequestHandler)
 
-  print >>sys.stderr, '''
+  print('''
       Gruyere started...
           http://%s:%d/
           http://%s:%d/%s/''' % (
               server_name, server_port, server_name, server_port,
-              server_unique_id)
+              server_unique_id), file=sys.stderr)
 
   global stored_data
   stored_data = _LoadDatabase()
@@ -130,17 +134,17 @@ def main():
       http_server.handle_request()
       _SaveDatabase(stored_data)
     except KeyboardInterrupt:
-      print >>sys.stderr, '\nReceived KeyboardInterrupt'
+      print('\nReceived KeyboardInterrupt', file=sys.stderr)
       quit_server = True
 
-  print >>sys.stderr, '\nClosing'
+  print('\nClosing', file=sys.stderr)
   http_server.socket.close()
   _Exit('quit_server')
 
 
 def _Exit(reason):
   # use os._exit instead of sys.exit because this can't be trapped
-  print >>sys.stderr, '\nExit: ' + reason
+  print('\nExit: ' + reason, file=sys.stderr)
   os._exit(0)
 
 
@@ -158,8 +162,8 @@ def _LoadDatabase():
   """
 
   try:
-    f = _Open(INSTALL_PATH, DB_FILE)
-    stored_data = cPickle.load(f)
+    f = _Open(INSTALL_PATH, DB_FILE,'rb')
+    stored_data = pickle.load(f)
     f.close()
   except (IOError, ValueError):
     _Log('Couldn\'t load data; expected the first time Gruyere is run')
@@ -181,14 +185,14 @@ def _SaveDatabase(save_database):
   """
 
   try:
-    f = _Open(INSTALL_PATH, DB_FILE, 'w')
-    cPickle.dump(save_database, f)
+    f = _Open(INSTALL_PATH, DB_FILE, 'wb')
+    pickle.dump(save_database, f)
     f.close()
   except IOError:
     _Log('Couldn\'t save data')
 
 
-def _Open(location, filename, mode='rb'):
+def _Open(location, filename, mode='r'):
   """Open a file from a specific location.
 
   Args:
@@ -448,7 +452,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       self.send_header('Set-Cookie', new_cookie_text)
     self.send_header('X-XSS-Protection', '0')
     self.end_headers()
-    self.wfile.write(html)
+    self.wfile.write(html.encode())
 
   def _SendTextResponse(self, text, new_cookie_text=None):
     """Sends a verbatim text response."""
@@ -654,7 +658,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       (host, port) = http_server.server_address
       url = 'http://%s:%d/%s/%s/%s' % (
           host, port, specials[SPECIAL_UNIQUE_ID], cookie[COOKIE_UID], filename)
-    except IOError, ex:
+    except IOError as ex:
       message = 'Couldn\'t write file %s: %s' % (filename, ex.message)
       _Log(message)
 
@@ -691,7 +695,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
     directory = RESOURCE_PATH + os.sep + str(uid) + os.sep
     try:
-      print 'mkdir: ', directory
+      print('mkdir: ', directory)
       os.mkdir(directory)
       # throws an exception if directory already exists,
       # however exception type varies by platform
@@ -717,13 +721,12 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     self.send_header('Content-type', 'text/html')
     self.send_header('X-XSS-Protection', '0')
     self.end_headers()
-    self.wfile.write(
-        '''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
-        <html><body>
-        <title>302 Redirect</title>
-        Redirected <a href="%s">here</a>
-        </body></html>'''
-        % (url,))
+    res = u'''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
+    <html><body>
+    <title>302 Redirect</title>
+    Redirected <a href="%s">here</a>
+    </body></html>''' % (url)
+    self.wfile.write(res.encode())
 
   def _GetHandlerFunction(self, path):
     try:
@@ -750,8 +753,8 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
     request_ip = self.client_address[0]                      
     if request_ip not in allowed_ips:                        
-      print >>sys.stderr, (                                  
-          'DANGER! Request from bad ip: ' + request_ip)      
+      print((                                  
+          'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)      
       _Exit('bad_ip')                                        
 
     if (server_unique_id not in path                         
@@ -760,9 +763,9 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
         self._SendRedirect('/', server_unique_id)            
         return                                               
       else:                                                  
-        print >>sys.stderr, (                                
-            'DANGER! Request without unique id: ' + path)    
-        _Exit('bad_id')                                      
+        print((                                
+            'DANGER! Request without unique id: ' + path), file=sys.stderr)    
+        #_Exit('bad_id')                                      
 
     path = path.replace('/' + server_unique_id, '', 1)       
 
@@ -779,7 +782,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       unique_id: The unique id from the url.
     """
 
-    path = urllib.unquote(path)
+    path = urllib.parse.unquote(path)
 
     if not path:
       self._SendRedirect('/', server_unique_id)
@@ -812,7 +815,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
 
 def _Log(message):
-  print >>sys.stderr, message
+  print(message, file=sys.stderr)
 
 
 if __name__ == '__main__':
