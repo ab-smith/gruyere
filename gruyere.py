@@ -787,7 +787,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     if not path:
       self._SendRedirect('/', server_unique_id)
       return
-    params = cgi.parse_qs(query)  # url.query
+    params = urllib.parse.parse_qs(query)  # url.query
     specials = {}
     cookie = self._GetCookie('GRUYERE')
     database = self._GetDatabase()
