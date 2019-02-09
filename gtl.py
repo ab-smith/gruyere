@@ -15,7 +15,11 @@ code may be used for educational or instructional purposes provided this
 notice is kept intact. By using Gruyere you agree to the Terms of Service
 https://www.google.com/intl/en/policies/terms/
 """
+from __future__ import print_function
 
+from builtins import str
+from builtins import range
+import collections
 __author__ = 'Bruce Leban'
 
 # system modules
@@ -180,11 +184,11 @@ def _ExpandInclude(_, filename, template, specials, params, name):
 def _ExpandFor(tag, template, specials, block_data):
   """Expands a for block iterating over the block_data."""
   result = []
-  if operator.isMappingType(block_data):
+  if isinstance(block_data, collections.Mapping):
     for v in block_data:
       result.append(ExpandTemplate(template, specials, block_data[v], v))
-  elif operator.isSequenceType(block_data):
-    for i in xrange(len(block_data)):
+  elif isinstance(block_data, collections.Sequence):
+    for i in range(len(block_data)):
       result.append(ExpandTemplate(template, specials, block_data[i], str(i)))
   else:
     _Log('Error: Invalid type: %s' % (tag,))
@@ -244,7 +248,7 @@ def _ExpandValue(var, specials, params, name, default):
       v = params
     if v.startswith('*'):
       v = _GetValue(specials['_params'], v[1:])
-      if operator.isSequenceType(v):
+      if isinstance(v, collections.Sequence):
         v = v[0]  # reduce repeated url param to single value
     value = _GetValue(value, str(v), default)
   return value
@@ -259,9 +263,9 @@ def _GetValue(collection, index, default=''):
   Returns:
     value
   """
-  if operator.isMappingType(collection) and index in collection:
+  if isinstance(collection, collections.Mapping) and index in collection:
     value = collection[index]
-  elif (operator.isSequenceType(collection) and index.isdigit() and
+  elif (isinstance(collection, collections.Sequence) and index.isdigit() and
         int(index) < len(collection)):
     value = collection[int(index)]
   else:
@@ -301,4 +305,4 @@ def _FindTag(template, open_marker, close_marker):
 
 def _Log(message):
   logging.warning('%s', message)
-  print >>sys.stderr, message
+  print(message, file=sys.stderr)
