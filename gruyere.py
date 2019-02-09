@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 """Gruyere - a web application with holes.
 
@@ -162,7 +162,7 @@ def _LoadDatabase():
   """
 
   try:
-    f = _Open(INSTALL_PATH, DB_FILE)
+    f = _Open(INSTALL_PATH, DB_FILE,'rb')
     stored_data = pickle.load(f)
     f.close()
   except (IOError, ValueError):
@@ -185,14 +185,14 @@ def _SaveDatabase(save_database):
   """
 
   try:
-    f = _Open(INSTALL_PATH, DB_FILE, 'w')
+    f = _Open(INSTALL_PATH, DB_FILE, 'wb')
     pickle.dump(save_database, f)
     f.close()
   except IOError:
     _Log('Couldn\'t save data')
 
 
-def _Open(location, filename, mode='rb'):
+def _Open(location, filename, mode='r'):
   """Open a file from a specific location.
 
   Args:
@@ -452,7 +452,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       self.send_header('Set-Cookie', new_cookie_text)
     self.send_header('X-XSS-Protection', '0')
     self.end_headers()
-    self.wfile.write(html)
+    self.wfile.write(html.encode())
 
   def _SendTextResponse(self, text, new_cookie_text=None):
     """Sends a verbatim text response."""
@@ -721,13 +721,12 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     self.send_header('Content-type', 'text/html')
     self.send_header('X-XSS-Protection', '0')
     self.end_headers()
-    self.wfile.write(
-        '''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
-        <html><body>
-        <title>302 Redirect</title>
-        Redirected <a href="%s">here</a>
-        </body></html>'''
-        % (url,))
+    res = u'''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
+    <html><body>
+    <title>302 Redirect</title>
+    Redirected <a href="%s">here</a>
+    </body></html>''' % (url)
+    self.wfile.write(res.encode())
 
   def _GetHandlerFunction(self, path):
     try:
@@ -766,7 +765,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       else:                                                  
         print((                                
             'DANGER! Request without unique id: ' + path), file=sys.stderr)    
-        _Exit('bad_id')                                      
+        #_Exit('bad_id')                                      
 
     path = path.replace('/' + server_unique_id, '', 1)       
 

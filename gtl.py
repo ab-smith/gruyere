@@ -90,7 +90,7 @@ def ExpandTemplate(template, specials, params, name=''):
 
     {{#<comment>}}
   """
-  t = _ExpandBlocks(template, specials, params, name)
+  t = _ExpandBlocks(str(template), specials, params, name)
   t = _ExpandVariables(t, specials, params, name)
   return t
 
