@@ -677,7 +677,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
         fp=self.rfile,
         headers=self.headers,
         environ={'REQUEST_METHOD': 'POST',
-                 'CONTENT_TYPE': self.headers.getheader('content-type')})
+                 'CONTENT_TYPE': self.headers.get('content-type')})          
 
     upload_file = form['upload_file']
     file_data = upload_file.file.read()
