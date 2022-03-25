@@ -23,7 +23,7 @@ import collections
 __author__ = 'Bruce Leban'
 
 # system modules
-import cgi
+import html
 import logging
 import operator
 import os
@@ -216,7 +216,7 @@ def _ExpandVariable(var, specials, params, name, default=''):
     value = not value
 
   if escaper_name == 'text':
-    value = cgi.escape(str(value))
+    value = html.escape(str(value))
   elif escaper_name == 'html':
     value = sanitize.SanitizeHtml(str(value))
   elif escaper_name == 'pprint':  # for debugging

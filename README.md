@@ -5,7 +5,7 @@ Clone and run ./gruyere.py
 
 I've added minor changes for Python 3 compatibility (the code is python2/3 compatible). You might need a `pip3 install future`
 
-Tested on Linux/Unix with Python 2.7, 3.6 and 3.7
+Tested on Linux/Unix with Python 2.7 to 3.9
 ## credits
 Base code is Copyright 2017 Google Inc. All Rights Reserved.
 
