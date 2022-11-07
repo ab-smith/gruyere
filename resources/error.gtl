@@ -10,7 +10,7 @@
 [[include:menubar.gtl]][[/include:menubar.gtl]]
 
 [[if:_message]]
-<div class='message'>{{_message}}</div>
+<div class='message'>{{_message:text}}</div>
 [[/if:_message]]
 
 </body>

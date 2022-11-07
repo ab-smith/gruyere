@@ -101,7 +101,7 @@ def main():
   quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))   
   quit_timer.start()
   
-  server_name = 'localhost'  
+  server_name = '0.0.0.0'  
   server_port = 8008                                             
 
   # The unique id is created from a CSPRNG.
@@ -749,7 +749,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
    #Network Security settings
 
-    allowed_ips = ['127.0.0.1']
+    allowed_ips = ['192.168.88.1']
 
     request_ip = self.client_address[0]                      
     if request_ip not in allowed_ips:                        
