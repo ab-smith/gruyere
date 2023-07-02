@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from builtins import str
 from builtins import range
-import collections
+import collections.abc as collections
 __author__ = 'Bruce Leban'
 
 # system modules
